@@ -49,7 +49,7 @@ app.post('/api/tasks', (req, res) => {
     return res.status(400).json({ success: false, message: 'priority must be high | medium | low' });
   }
 
-  const task = { id: nextId++, text: text.trim(), priority, done: false, createdAt: new Date() };
+  const task = { id: nextId++, text, priority, done: false, createdAt: new Date() };
   tasks.push(task);
   res.status(201).json({ success: true, data: task });
 });
