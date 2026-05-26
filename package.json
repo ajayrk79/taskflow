@@ -2,22 +2,22 @@
   "name": "taskflow",
   "version": "1.0.0",
   "main": "server.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node server.js"
-  },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "description": "",
+  "scripts": {
+    "start": "node server.js",
+    "test": "jest",
+    "build": "echo Build done",
+    "lint": "echo Lint done"
+  },
   "dependencies": {
     "cors": "^2.8.6",
     "express": "^5.2.1"
   },
-  "scripts": {
-  "start": "node server.js",
-  "test": "jest",
-  "build": "echo Build done",
-  "lint": "echo Lint done"
-}
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "supertest": "^6.3.4"
+  }
 }
