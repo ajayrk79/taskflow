@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>TaskFlow — Mini Task Manager</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700&family=DM+Sans:wght@300;400;500&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0f0f14;
+    --surface: #1a1a24;
+    --surface2: #22222f;
+    --border: rgba(255,255,255,0.08);
+    --accent: #7c6af7;
+    --accent-soft: rgba(124,106,247,0.15);
+    --text: #e8e6f4;
+    --muted: #6b6880;
+    --success: #36d399;
+    --warning: #fbbd23;
+    --danger: #f87272;
+    --font-head: 'Syne', sans-serif;
+    --font-body: 'DM Sans', sans-serif;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-body);
+    min-height: 100vh;
+    padding: 2rem;
+  }
+
+  .app-shell {
+    max-width: 780px;
+    margin: 0 auto;
+  }
+
+  header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2.5rem;
+  }
+
+  .logo {
+    font-family: var(--font-head);
+    font-size: 1.6rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--text);
+  }
+  .logo span { color: var(--accent); }
+
+  .badge-env {
+    font-size: 0.7rem;
+    font-weight: 500;
+    padding: 4px 10px;
+    border-radius: 20px;
+    background: var(--accent-soft);
+    color: var(--accent);
+    border: 1px solid rgba(124,106,247,0.3);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 2rem;
+  }
+
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 1.1rem 1.2rem;
+  }
+  .stat-card .label {
+    font-size: 0.75rem;
+    color: var(--muted);
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  .stat-card .value {
+    font-family: var(--font-head);
+    font-size: 1.9rem;
+    font-weight: 700;
+    line-height: 1;
+  }
+  .stat-card.total  .value { color: var(--text); }
+  .stat-card.done   .value { color: var(--success); }
+  .stat-card.todo   .value { color: var(--warning); }
+
+  .input-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 1.5rem;
+  }
+
+  .task-input {
+    flex: 1;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 0.75rem 1rem;
+    color: var(--text);
+    font-family: var(--font-body);
+    font-size: 0.95rem;
+    outline: none;
+    transition: border 0.2s;
+  }
+  .task-input:focus { border-color: var(--accent); }
+  .task-input::placeholder { color: var(--muted); }
+
+  .select-priority {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 0.75rem 0.8rem;
+    color: var(--text);
+    font-family: var(--font-body);
+    font-size: 0.9rem;
+    outline: none;
+    cursor: pointer;
+  }
+
+  .btn-add {
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    padding: 0.75rem 1.3rem;
+    font-family: var(--font-head);
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    letter-spacing: 0.02em;
+    transition: opacity 0.2s, transform 0.1s;
+  }
+  .btn-add:hover { opacity: 0.9; }
+  .btn-add:active { transform: scale(0.97); }
+
+  .filter-tabs {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 1.2rem;
+  }
+  .tab {
+    padding: 6px 16px;
+    border-radius: 8px;
+    font-size: 0.82rem;
+    font-weight: 500;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: all 0.15s;
+    color: var(--muted);
+  }
+  .tab.active {
+    background: var(--accent-soft);
+    color: var(--accent);
+    border-color: rgba(124,106,247,0.3);
+  }
+  .tab:hover:not(.active) { color: var(--text); }
+
+  .task-list { display: flex; flex-direction: column; gap: 8px; }
+
+  .task-item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1rem 1.1rem;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    transition: border-color 0.2s, background 0.2s;
+  }
+  .task-item:hover { border-color: rgba(124,106,247,0.25); background: var(--surface2); }
+  .task-item.done-item { opacity: 0.55; }
+
+  .checkbox {
+    width: 20px; height: 20px;
+    border-radius: 6px;
+    border: 1.5px solid var(--muted);
+    background: transparent;
+    flex-shrink: 0;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+  }
+  .checkbox.checked {
+    background: var(--success);
+    border-color: var(--success);
+  }
+  .checkbox.checked::after { content: '✓'; font-size: 12px; color: #0f0f14; font-weight: 700; }
+
+  .task-text { flex: 1; font-size: 0.93rem; }
+  .task-text.done-text { text-decoration: line-through; color: var(--muted); }
+
+  .priority-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .p-high { background: var(--danger); }
+  .p-medium { background: var(--warning); }
+  .p-low { background: var(--success); }
+
+  .delete-btn {
+    background: none;
+    border: none;
+    color: var(--muted);
+    cursor: pointer;
+    font-size: 1rem;
+    padding: 2px 6px;
+    border-radius: 6px;
+    transition: color 0.15s, background 0.15s;
+  }
+  .delete-btn:hover { color: var(--danger); background: rgba(248,114,114,0.1); }
+
+  .empty-state {
+    text-align: center;
+    padding: 3rem 0;
+    color: var(--muted);
+    font-size: 0.9rem;
+  }
+  .empty-state .icon { font-size: 2.5rem; margin-bottom: 0.5rem; opacity: 0.4; }
+
+  .api-status {
+    margin-top: 2rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1rem 1.2rem;
+  }
+  .api-status .title {
+    font-size: 0.75rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 10px;
+  }
+  .status-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.85rem;
+    color: var(--muted);
+  }
+  .dot-live { width: 8px; height: 8px; border-radius: 50%; background: var(--success); animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+</style>
+</head>
+<body>
+<div class="app-shell">
+  <header>
+    <div class="logo">Task<span>Flow</span></div>
+    <span class="badge-env">production v2.1.0</span>
+  </header>
+
+  <div class="stats-row">
+    <div class="stat-card total">
+      <div class="label">Total Tasks</div>
+      <div class="value" id="count-total">0</div>
+    </div>
+    <div class="stat-card done">
+      <div class="label">Completed</div>
+      <div class="value" id="count-done">0</div>
+    </div>
+    <div class="stat-card todo">
+      <div class="label">Pending</div>
+      <div class="value" id="count-todo">0</div>
+    </div>
+  </div>
+
+  <div class="input-row">
+    <input class="task-input" id="task-input" placeholder="Add a new task..." />
+    <select class="select-priority" id="priority-select">
+      <option value="high">🔴 High</option>
+      <option value="medium" selected>🟡 Medium</option>
+      <option value="low">🟢 Low</option>
+    </select>
+    <button class="btn-add" onclick="addTask()">+ Add</button>
+  </div>
+
+  <div class="filter-tabs">
+    <div class="tab active" onclick="setFilter('all', this)">All</div>
+    <div class="tab" onclick="setFilter('pending', this)">Pending</div>
+    <div class="tab" onclick="setFilter('done', this)">Done</div>
+  </div>
+
+  <div class="task-list" id="task-list"></div>
+
+  <div class="api-status">
+    <div class="title">Backend API Status</div>
+    <div class="status-row">
+      <span class="dot-live"></span>
+      <span id="api-text">Connected → http://localhost:3000/api/tasks</span>
+    </div>
+  </div>
+</div>
+
+<script>
+  let tasks = [
+    { id: 1, text: 'Set up CI/CD pipeline with GitHub Actions', priority: 'high', done: false },
+    { id: 2, text: 'Write unit tests for API endpoints', priority: 'high', done: true },
+    { id: 3, text: 'Deploy to production server', priority: 'medium', done: false },
+    { id: 4, text: 'Add Docker containerization', priority: 'medium', done: false },
+    { id: 5, text: 'Update README documentation', priority: 'low', done: true },
+  ];
+  let filter = 'all';
+  let nextId = 6;
+
+  function getFiltered() {
+    if (filter === 'pending') return tasks.filter(t => !t.done);
+    if (filter === 'done') return tasks.filter(t => t.done);
+    return tasks;
+  }
+
+  function render() {
+    const list = document.getElementById('task-list');
+    const filtered = getFiltered();
+    document.getElementById('count-total').textContent = tasks.length;
+    document.getElementById('count-done').textContent = tasks.filter(t => t.done).length;
+    document.getElementById('count-todo').textContent = tasks.filter(t => !t.done).length;
+
+    if (filtered.length === 0) {
+      list.innerHTML = '<div class="empty-state"><div class="icon">📭</div>No tasks here yet.</div>';
+      return;
+    }
+    list.innerHTML = filtered.map(t => `
+      <div class="task-item ${t.done ? 'done-item' : ''}">
+        <div class="checkbox ${t.done ? 'checked' : ''}" onclick="toggle(${t.id})"></div>
+        <span class="task-text ${t.done ? 'done-text' : ''}">${t.text}</span>
+        <span class="priority-dot p-${t.priority}"></span>
+        <button class="delete-btn" onclick="deleteTask(${t.id})">✕</button>
+      </div>`).join('');
+  }
+
+  function addTask() {
+    const input = document.getElementById('task-input');
+    const priority = document.getElementById('priority-select').value;
+    const text = input.value.trim();
+    if (!text) return;
+    tasks.unshift({ id: nextId++, text, priority, done: false });
+    input.value = '';
+    render();
+    // Simulate API call
+    document.getElementById('api-text').textContent = 'POST /api/tasks → 201 Created ✓';
+    setTimeout(() => {
+      document.getElementById('api-text').textContent = 'Connected → http://localhost:3000/api/tasks';
+    }, 2000);
+  }
+
+  function toggle(id) {
+    tasks = tasks.map(t => t.id === id ? { ...t, done: !t.done } : t);
+    render();
+  }
+
+  function deleteTask(id) {
+    tasks = tasks.filter(t => t.id !== id);
+    render();
+  }
+
+  function setFilter(f, el) {
+    filter = f;
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+    render();
+  }
+
+  document.getElementById('task-input').addEventListener('keydown', e => {
+    if (e.key === 'Enter') addTask();
+  });
+
+  render();
+</script>
+</body>
+</html>
